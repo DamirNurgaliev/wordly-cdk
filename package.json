@@ -15,6 +15,8 @@
     "@types/jest": "^29.5.3",
     "@types/node": "20.4.2",
     "aws-cdk": "2.88.0",
+    "cheerio": "^1.0.0-rc.12",
+    "fs": "^0.0.1-security",
     "jest": "^29.6.1",
     "prettier": "3.0.0",
     "ts-jest": "^29.1.1",
@@ -25,12 +27,7 @@
     "aws-cdk-lib": "2.88.0",
     "aws-lambda": "^1.0.7",
     "aws-sdk": "^2.1425.0",
-    "axios": "^1.4.0",
-    "cheerio": "^1.0.0-rc.12",
     "constructs": "^10.0.0",
-    "got": "^13.0.0",
-    "node-fetch": "^3.3.2",
-    "puppeteer": "^20.9.0",
     "source-map-support": "^0.5.21"
   }
 }
