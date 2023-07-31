@@ -1,10 +1,12 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
-import { Runtime } from "aws-cdk-lib/aws-lambda";
-import { Asset } from 'aws-cdk-lib/aws-s3-assets'
+import { Runtime, Code } from "aws-cdk-lib/aws-lambda";
+import { Asset } from 'aws-cdk-lib/aws-s3-assets';
 import * as lambda from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as path from 'path';
+import * as cr from 'aws-cdk-lib/custom-resources';
+import * as iam from 'aws-cdk-lib/aws-iam';
 
 export class WordlyCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -21,20 +23,11 @@ export class WordlyCdkStack extends cdk.Stack {
       path: path.join(__dirname, '../files', 'ruFiveWords.txt')
     });
 
-    const nodeJsFunctionProps: lambda.NodejsFunctionProps = {
-      bundling: {
-        externalModules: [
-          'aws-sdk',
-        ],
-      },
+    const fillDbWithWords = new lambda.NodejsFunction(this, 'fillDbWithWords', {
+      entry: path.join(__dirname, '../src/lambdas', 'fillDbWithWords.ts'),
       runtime: Runtime.NODEJS_16_X,
       timeout: cdk.Duration.minutes(1),
       memorySize: 256,
-    };
-
-    const fillDbWithWords = new lambda.NodejsFunction(this, 'fillDbWithWords', {
-      entry: path.join(__dirname, '../src/lambdas', 'fillDbWithWords.ts'),
-      ...nodeJsFunctionProps,
       functionName: 'fillDbWithWords',
       environment: {
         'S3_BUCKET_NAME': fileAsset.s3BucketName,
@@ -43,7 +36,25 @@ export class WordlyCdkStack extends cdk.Stack {
       },
     });
 
+    const lambdaTrigger = new cr.AwsCustomResource(this, 'fillDbWithWordsLambdaTrigger', {
+      policy: cr.AwsCustomResourcePolicy.fromStatements([new iam.PolicyStatement({
+        actions: ['lambda:InvokeFunction'],
+        effect: iam.Effect.ALLOW,
+        resources: [fillDbWithWords.functionArn]
+      })]),
+      timeout: cdk.Duration.minutes(15),
+      onCreate: {
+        service: 'Lambda',
+        action: 'invoke',
+        parameters: {
+          FunctionName: fillDbWithWords.functionName,
+          InvocationType: 'Event'
+        },
+        physicalResourceId: cr.PhysicalResourceId.of('fillDbWithWordsPhysicalId')
+      },
+    })
+
     fileAsset.grantRead(fillDbWithWords)
-    entitiesTable.grantWriteData(fillDbWithWords)
+    entitiesTable.grantFullAccess(fillDbWithWords)
   }
 }
