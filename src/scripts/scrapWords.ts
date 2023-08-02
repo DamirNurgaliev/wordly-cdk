@@ -24,7 +24,7 @@ const fetchWords = async () => {
   // Create and put all words to txt file
   const file = fs.createWriteStream("files/ruFiveWords.txt");
   file.write(words.join('\n'));
-
+  file.close;
   console.log('File successfully generated')
 };
 

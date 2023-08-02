@@ -1,4 +1,5 @@
 import { S3, DynamoDB } from 'aws-sdk';
+import { v4 as uuidv4 } from 'uuid';
 
 export const handler = async () => {
   const dynamoDb = new DynamoDB.DocumentClient();
@@ -13,6 +14,7 @@ export const handler = async () => {
       TableName: process.env.DYNAMODB_TABLE || '',
       Item: {
         entity: 'RU5',
+        uuid: uuidv4(),
         name: word,
       }
     }).promise();

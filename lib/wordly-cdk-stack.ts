@@ -7,6 +7,7 @@ import * as lambda from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as path from 'path';
 import * as cr from 'aws-cdk-lib/custom-resources';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as apigwv from 'aws-cdk-lib/aws-apigateway';
 
 export class WordlyCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -14,7 +15,7 @@ export class WordlyCdkStack extends cdk.Stack {
 
     const entitiesTable = new dynamodb.Table(this, 'gamesTable', {
       partitionKey: { name: 'entity', type: dynamodb.AttributeType.STRING },
-      sortKey: { name: 'name', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'uuid', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
@@ -56,5 +57,27 @@ export class WordlyCdkStack extends cdk.Stack {
 
     fileAsset.grantRead(fillDbWithWords)
     entitiesTable.grantFullAccess(fillDbWithWords)
+
+    const startGame = new lambda.NodejsFunction(this, 'startGame', {
+      entry: path.join(__dirname, '../src/lambdas', 'startGame.ts'),
+      runtime: Runtime.NODEJS_16_X,
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      functionName: 'startGame',
+      environment: {
+        'DYNAMODB_TABLE': entitiesTable.tableName,
+      },
+    });
+
+    const api = new apigwv.LambdaRestApi(this, 'myapi', {
+      handler: startGame,
+    });
+
+    new cdk.CfnOutput(this, 'test', {
+      value: api.url,
+      description: 'Lambda testing url',
+    });
+
+    entitiesTable.grantFullAccess(startGame)
   }
 }
