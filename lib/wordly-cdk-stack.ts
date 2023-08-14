@@ -58,26 +58,26 @@ export class WordlyCdkStack extends cdk.Stack {
     fileAsset.grantRead(fillDbWithWords)
     entitiesTable.grantFullAccess(fillDbWithWords)
 
-    const startGame = new lambda.NodejsFunction(this, 'startGame', {
-      entry: path.join(__dirname, '../src/lambdas', 'startGame.ts'),
+    const verifyAnswer = new lambda.NodejsFunction(this, 'verifyAnswer', {
+      entry: path.join(__dirname, '../src/lambdas', 'verifyAnswer.ts'),
       runtime: Runtime.NODEJS_16_X,
       timeout: cdk.Duration.seconds(10),
       memorySize: 128,
-      functionName: 'startGame',
+      functionName: 'verifyAnswer',
       environment: {
         'DYNAMODB_TABLE': entitiesTable.tableName,
       },
     });
 
-    const api = new apigwv.LambdaRestApi(this, 'myapi', {
-      handler: startGame,
+    const verifyAnswerApi = new apigwv.LambdaRestApi(this, 'verifyAnswerApi', {
+      handler: verifyAnswer,
     });
 
     new cdk.CfnOutput(this, 'test', {
-      value: api.url,
+      value: verifyAnswerApi.url,
       description: 'Lambda testing url',
     });
 
-    entitiesTable.grantFullAccess(startGame)
+    entitiesTable.grantFullAccess(verifyAnswer)
   }
 }

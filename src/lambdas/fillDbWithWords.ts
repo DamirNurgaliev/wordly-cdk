@@ -15,7 +15,7 @@ export const handler = async () => {
       Item: {
         entity: 'RU5',
         uuid: uuidv4(),
-        name: word,
+        word: word,
       }
     }).promise();
   }
