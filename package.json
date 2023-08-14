@@ -14,6 +14,7 @@
     "@types/aws-lambda": "^8.10.119",
     "@types/jest": "^29.5.3",
     "@types/node": "20.4.2",
+    "@types/uuid": "^9.0.2",
     "aws-cdk": "2.88.0",
     "cheerio": "^1.0.0-rc.12",
     "fs": "^0.0.1-security",
