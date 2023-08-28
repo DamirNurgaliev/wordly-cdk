@@ -3,11 +3,16 @@ import { Construct } from 'constructs';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import { Runtime, Code } from "aws-cdk-lib/aws-lambda";
 import { Asset } from 'aws-cdk-lib/aws-s3-assets';
+import * as CodePipeline from 'aws-cdk-lib/aws-codepipeline';
+import * as CodePipelineAction from 'aws-cdk-lib/aws-codepipeline-actions';
+import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as lambda from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as path from 'path';
 import * as cr from 'aws-cdk-lib/custom-resources';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as apigwv from 'aws-cdk-lib/aws-apigateway';
+import * as CDK from 'aws-cdk-lib/core';
+import * as CodeBuild from 'aws-cdk-lib/aws-codebuild';
 
 export class WordlyCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -79,5 +84,77 @@ export class WordlyCdkStack extends cdk.Stack {
     });
 
     entitiesTable.grantFullAccess(verifyAnswer)
+
+    // S3-SPA infra
+
+    const spaBucket = new s3.Bucket(this, 'spaBucket', {
+      bucketName: 'spa-wordly-bucket',
+      websiteIndexDocument: 'index.html',
+      websiteErrorDocument: 'index.html',
+      autoDeleteObjects: true,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      publicReadAccess: true,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ACLS,
+      accessControl: s3.BucketAccessControl.BUCKET_OWNER_FULL_CONTROL
+    });
+
+
+    // AWS CodeBuild artifacts
+    const outputSources = new CodePipeline.Artifact();
+    const outputWebsite = new CodePipeline.Artifact();
+
+    // AWS CodePipeline pipeline
+    const pipeline = new CodePipeline.Pipeline(this, "Pipeline", {
+      pipelineName: "Website",
+      restartExecutionOnUpdate: true,
+    });
+
+    // AWS CodePipeline stage to clone sources from GitHub repository
+    pipeline.addStage({
+      stageName: "Source",
+      actions: [
+        new CodePipelineAction.GitHubSourceAction({
+          actionName: "Prepare",
+          owner: 'damirnurgaliev',
+          repo: 'wordly-cdk',
+          oauthToken: CDK.SecretValue.secretsManager("GitHubToken"),
+          output: outputSources,
+          trigger: CodePipelineAction.GitHubTrigger.WEBHOOK,
+          branch: "main",
+        }),
+      ],
+    });
+
+    // AWS CodePipeline stage to build CRA website and CDK resources
+    pipeline.addStage({
+      stageName: "Build",
+      actions: [
+        // AWS CodePipeline action to run CodeBuild project
+        new CodePipelineAction.CodeBuildAction({
+          actionName: "Website",
+          project: new CodeBuild.PipelineProject(this, "BuildWebsite", {
+            projectName: "Website",
+            buildSpec: CodeBuild.BuildSpec.fromSourceFilename(
+              "./src/wordly-spa/buildspec.yml"
+            ),
+          }),
+          input: outputSources,
+          outputs: [outputWebsite],
+        }),
+      ],
+    });
+
+    // AWS CodePipeline stage to deployt CRA website and CDK resources
+    pipeline.addStage({
+      stageName: "Deploy",
+      actions: [
+        // AWS CodePipeline action to deploy CRA website to S3
+        new CodePipelineAction.S3DeployAction({
+          actionName: "Deploy",
+          input: outputWebsite,
+          bucket: spaBucket,
+        }),
+      ],
+    });
   }
 }
