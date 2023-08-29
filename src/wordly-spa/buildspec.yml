@@ -6,6 +6,7 @@ phases:
       nodejs: 18
   pre_build:
     commands:
+      - cd src/wordly-spa
       - npm install
   build:
     commands:
@@ -13,5 +14,4 @@ phases:
 
 artifacts:
   files:
-    - "./src/wordly-spa/**/*"
-  base-directory: build
+    - "build/**/*"
