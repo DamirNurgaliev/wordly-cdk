@@ -3,9 +3,10 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      nodejs: 18
+      nodejs: 16
   pre_build:
     commands:
+      - n 18
       - cd src/wordly-spa
       - npm install
   build:
