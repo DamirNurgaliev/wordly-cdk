@@ -105,7 +105,7 @@ export class WordlyCdkStack extends cdk.Stack {
 
     // AWS CodePipeline pipeline
     const pipeline = new CodePipeline.Pipeline(this, "Pipeline", {
-      pipelineName: "Website",
+      pipelineName: "wordly-main",
       restartExecutionOnUpdate: true,
     });
 
@@ -115,7 +115,7 @@ export class WordlyCdkStack extends cdk.Stack {
       actions: [
         new CodePipelineAction.GitHubSourceAction({
           actionName: "Prepare",
-          owner: 'damirnurgaliev',
+          owner: 'DamirNurgaliev',
           repo: 'wordly-cdk',
           oauthToken: CDK.SecretValue.secretsManager("GitHubToken"),
           output: outputSources,
@@ -125,15 +125,15 @@ export class WordlyCdkStack extends cdk.Stack {
       ],
     });
 
-    // AWS CodePipeline stage to build CRA website and CDK resources
+    // AWS CodePipeline stage to build website and CDK resources
     pipeline.addStage({
       stageName: "Build",
       actions: [
         // AWS CodePipeline action to run CodeBuild project
         new CodePipelineAction.CodeBuildAction({
-          actionName: "Website",
-          project: new CodeBuild.PipelineProject(this, "BuildWebsite", {
-            projectName: "Website",
+          actionName: "wordly-main",
+          project: new CodeBuild.PipelineProject(this, "build", {
+            projectName: "Wordly",
             buildSpec: CodeBuild.BuildSpec.fromSourceFilename(
               "./src/wordly-spa/buildspec.yml"
             ),
