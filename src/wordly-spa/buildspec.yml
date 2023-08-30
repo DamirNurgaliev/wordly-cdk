@@ -6,6 +6,7 @@ phases:
       nodejs: 16
   pre_build:
     commands:
+      - n 20
       - cd src/wordly-spa
       - npm install
   build:
