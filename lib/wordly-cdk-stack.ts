@@ -137,6 +137,9 @@ export class WordlyCdkStack extends cdk.Stack {
             buildSpec: CodeBuild.BuildSpec.fromSourceFilename(
               "./src/wordly-spa/buildspec.yml"
             ),
+            environment: {
+              buildImage: CodeBuild.LinuxBuildImage.STANDARD_7_0
+            } 
           }),
           input: outputSources,
           outputs: [outputWebsite],
