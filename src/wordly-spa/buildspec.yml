@@ -3,9 +3,7 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      nodejs: 18
-    commands:
-      - n 18
+      nodejs: 16
   pre_build:
     commands:
       - cd src/wordly-spa
@@ -17,5 +15,3 @@ phases:
 artifacts:
   files:
     - "build/**/*"
-
-image: aws/codebuild/standard:5.0
