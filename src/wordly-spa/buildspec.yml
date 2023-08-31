@@ -14,7 +14,7 @@ phases:
 
 artifacts:
   files:
-    - '**/*'
+    - 'build/**/*'
 
 cache:
   paths:
