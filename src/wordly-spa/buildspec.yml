@@ -15,5 +15,4 @@ phases:
 artifacts:
   files:
     - '**/*'
-  discard-paths: yes
   base-directory: 'src/wordly-spa/build'
